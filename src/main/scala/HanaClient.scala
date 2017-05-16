@@ -13,11 +13,11 @@ import org.apache.http.impl.client.{BasicCookieStore, CloseableHttpClient, HttpC
   * Created by jbinder on 16.05.17.
   */
 class HanaClient(val hanaServer:String, val hanaPort:Int, val hanaUser:String, val hanaPassword:String) extends Closeable {
-  val client = createClient
-  val response = fetchXCSRFToken(client)
+  val client : CloseableHttpClient = createClient
+  val response : HttpResponse= fetchXCSRFToken(client)
 
-  val cookies = response.getHeaders("set-cookie").map(h => h.getValue).mkString(";")
-  val token = response.getHeaders("x-csrf-token").map(h => h.getValue).mkString(";") // TODO error handling if this is empty
+  val cookies : String = response.getHeaders("set-cookie").map(h => h.getValue).mkString(";")
+  val token : String = response.getHeaders("x-csrf-token").map(h => h.getValue).mkString(";")
   if( cookies == "" || token == "") {
       throw new HanaClientException(s"X-CSRF-Token token receipt failed - Check authentication at $hanaServer:$hanaPort with user $hanaUser")
   }
