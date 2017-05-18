@@ -14,10 +14,11 @@ import org.apache.http.impl.client.{BasicCookieStore, CloseableHttpClient, HttpC
   */
 class HanaClient(val hanaServer: String, val hanaPort: Int, val hanaUser: String, val hanaPassword: String) extends Closeable {
   private val client: CloseableHttpClient = createClient
+  val successCodes = List(200, 201, 204)
   val response: HttpResponse = fetchXCSRFToken(client)
 
-  val cookies: String = response.getHeaders("set-cookie").map(h => h.getValue).mkString(";")
-  val token: String = response.getHeaders("x-csrf-token").map(h => h.getValue).mkString(";")
+  val cookies: String = response.getHeaders("set-cookie").map(_.getValue).mkString(";")
+  val token: String = response.getHeaders("x-csrf-token").map(_.getValue).mkString(";")
   if (cookies == "" || token == "") {
     throw new HanaClientException(s"X-CSRF-Token or cookie receipt failed - Check authentication at $hanaServer:$hanaPort with user $hanaUser")
   }
