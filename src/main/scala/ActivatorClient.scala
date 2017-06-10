@@ -6,14 +6,35 @@ object ActivatorClient {
     val arglist = args.toList
     type OptionMap = Map[Symbol, Any]
 
-    def nextOption(map: OptionMap, list: List[String]) : OptionMap = {
-      def isSwitch(s:String) = (s(0) == '-')
+    def nextOption(map: OptionMap, list: List[String]): OptionMap = {
       list match {
         case Nil => map
+        case "--url" :: value :: tail => {
+          val url_regex = """^(https?):\/\/?([^:\/\s]+):(\d+)((\/\w+)*)$""".r
+          value match {
+            case url_regex(protocol, host, port, dest, _*) =>
+              nextOption(map ++ Map('protocol -> protocol) ++ Map('host -> host) ++ Map('port -> port) ++ Map('dest -> dest), tail)
+            case _ => {
+              println("url wrongly provided: " + value)
+              sys.exit(1)
+            }
+          }
+        }
+        case "--user" :: value :: tail =>
+          nextOption(map ++ Map('user -> value), tail)
+        case "--password" :: value :: tail =>
+          nextOption(map ++ Map('password -> value), tail)
+        // case string :: Nil =>  nextOption(map ++ Map('infile -> string), list.tail)
+        case option :: tail => {
+          println("Unknown option " + option)
+          sys.exit(1)
+        }
       }
     }
 
-    val hanaClient = new HanaClient("srv-6712", 8012, "1", "2")
+    val options = nextOption(Map(), arglist)
+    val hanaClient = new HanaActivationClient("srv-6712", 8080, "1", "2")
+    hanaClient.delete("reporter_jbi/deleteme.txt")
     hanaClient.close()
   }
 }
