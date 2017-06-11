@@ -10,7 +10,7 @@ import org.apache.http.util.EntityUtils
 /**
   * Created by jbinder on 16.05.17.
   */
-class HanaActivationClient(hanaServer: String, hanaPort: Int, hanaUser: String, hanaPassword: String) extends HanaClient(hanaServer, hanaPort, hanaUser, hanaPassword) {
+class HanaActivationClient(protocol:String, host: String, port: Int, user: String, password: String, dest: String) extends HanaClient(protocol, host, port, user, password) {
   def getRoute(route: String): String = {
     // See /sap/hana/xs/dt/base/.xsaccess for the routes
     val routes = Map(
@@ -23,7 +23,7 @@ class HanaActivationClient(hanaServer: String, hanaPort: Int, hanaUser: String, 
       "INFO" -> "/info")
 
     routes.get(route) match {
-      case Some(r) => return s"http://$hanaServer:$hanaPort/sap/hana/xs/dt/base$r"
+      case Some(r) => return s"$protocol://$host:$port/sap/hana/xs/dt/base$r"
       case None => throw new HanaClientException(s"$route does not exists")
     }
   }
@@ -78,7 +78,7 @@ class HanaActivationClient(hanaServer: String, hanaPort: Int, hanaUser: String, 
         throw new HanaClientException("No location header in service response for import")
       } else {
         EntityUtils.consumeQuietly(response.getEntity)
-        val importLocationCall = new HttpPut(s"http://$hanaServer:$hanaPort$importLocation")
+        val importLocationCall = new HttpPut(s"$protocol://$host:$port$importLocation")
         importLocationCall.setEntity(createEntity(file))
         addContentType(file, importLocationCall)
         val fileLenght = file.length - 1L

@@ -13,7 +13,7 @@ object ActivatorClient {
           val url_regex = """^(https?):\/\/?([^:\/\s]+):(\d+)((\/\w+)*)$""".r
           value match {
             case url_regex(protocol, host, port, dest, _*) =>
-              nextOption(map ++ Map('protocol -> protocol) ++ Map('host -> host) ++ Map('port -> port) ++ Map('dest -> dest), tail)
+              nextOption(map ++ Map('protocol -> protocol) ++ Map('host -> host) ++ Map('port -> port.toInt) ++ Map('dest -> dest), tail)
             case _ => {
               println("url wrongly provided: " + value)
               sys.exit(1)
@@ -33,7 +33,7 @@ object ActivatorClient {
     }
 
     val options = nextOption(Map(), arglist)
-    val hanaClient = new HanaActivationClient("srv-6712", 8080, "1", "2")
+    val hanaClient = new HanaActivationClient(options('protocol).toString, options('host).toString, options('port).asInstanceOf[Int], options('user).toString, options('password).toString, options('dest).toString)
     hanaClient.delete("reporter_jbi/deleteme.txt")
     hanaClient.close()
   }
