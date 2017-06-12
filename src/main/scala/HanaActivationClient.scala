@@ -30,7 +30,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
 
   // saveFile
   def putFile(path: String, file: File) : HttpResponse = {
-    val transferFileCall = new HttpPut(getRoute("FILE") + "/" + path)
+    val transferFileCall = new HttpPut(getRoute("FILE") + "/" + path + "/" + file.getName)
     addContentType(file, transferFileCall)
     transferFileCall.setEntity(createEntity(file))
     val response = super.executeRequest(transferFileCall)
@@ -61,7 +61,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
 
   // importFile
   def importFile(path: String, file: File) : HttpResponse = {
-    val importFileCall = new HttpPost(getRoute("IMPORT") + "/" + path + "?force=true")
+    val importFileCall = new HttpPost(getRoute("IMPORT") + "/" + path + "/" + file.getName + "?force=true")
     importFileCall.addHeader("Slug", file.getName)
     importFileCall.addHeader("X-Create-Options", "no-overwrite")
     importFileCall.addHeader("X-Xfer-Content-Length", file.length.toString)
@@ -108,7 +108,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
 
   }
 
-  // exportPackage
+  // createRepoEntry
   def create(path: String, fileName: String, isDir: Boolean): Unit = {
     val createCall = new HttpPost(getRoute("FILE") + "/" + path)
     val stringEntity = new StringEntity("{\"Name\": \"" + fileName + "\", \"Directory\": \"" + isDir.toString + "\"}", Consts.UTF_8)
