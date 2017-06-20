@@ -2,8 +2,8 @@ import java.io.{File, FileOutputStream, IOException}
 import java.nio.file.Files
 
 import org.apache.commons.io.IOUtils
-import org.apache.http.{HttpEntity, HttpResponse, Consts}
-import org.apache.http.client.methods.{HttpDelete, HttpPost, HttpPut, HttpUriRequest}
+import org.apache.http.{Consts, HttpEntity, HttpResponse}
+import org.apache.http.client.methods._
 import org.apache.http.entity.{ContentType, FileEntity, StringEntity}
 import org.apache.http.util.EntityUtils
 
@@ -39,13 +39,13 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
 
   // getFile
   def getFile(path: String) : HttpResponse = {
-    val getFileCall = new HttpPut(getRoute("FILE") + "/" + path)
+    val getFileCall = new HttpGet(getRoute("FILE") + "/" + path)
     val response = super.executeRequest(getFileCall)
     return response
   }
 
   def getPackage(path: String, exportFileName: String): Unit = {
-    val exportPackageCall = new HttpPut(getRoute("EXPORT") + "/" + path + ".zip")
+    val exportPackageCall = new HttpGet(getRoute("EXPORT") + "/" + path + ".zip")
     val response = super.executeRequest(exportPackageCall)
     val statusCode = response.getStatusLine.getStatusCode
     if (statusCode != 201) {

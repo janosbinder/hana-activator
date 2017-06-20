@@ -1,3 +1,5 @@
+import java.io.File
+
 /**
   * Created by jbinder on 15.05.17.
   */
@@ -24,6 +26,23 @@ object ActivatorClient {
           nextOption(map ++ Map('user -> value), tail)
         case "--password" :: value :: tail =>
           nextOption(map ++ Map('password -> value), tail)
+        // Single operations
+        case "--create-file" :: value :: tail =>
+          nextOption(map ++ Map('singleoperation -> 'createfile) ++ Map('path -> value), tail)
+        case "--create-directory" :: value :: tail =>
+          nextOption(map ++ Map('singleoperation -> 'createdirectory) ++ Map('path -> value), tail)
+        case "--activate" :: value :: tail =>
+          nextOption(map ++ Map('singleoperation -> 'activate) ++ Map('path -> value), tail)
+        case "--upload-file" :: value :: tail =>
+          nextOption(map ++ Map('singleoperation -> 'uploadfile) ++ Map('path -> value), tail)
+        case "--delete" :: value :: tail =>
+          nextOption(map ++ Map('singleoperation -> 'delete) ++ Map('path -> value), tail)
+        case "--delete" :: tail =>
+          nextOption(map ++ Map('singleoperation -> 'delete) ++ Map('path -> ""), tail)
+        case "--import-package" :: value :: tail =>
+          nextOption(map ++ Map('singleoperation -> 'importpackage) ++ Map('path -> value), tail)
+        case "--export-package" :: value :: tail =>
+          nextOption(map ++ Map('singleoperation -> 'exportpackage) ++ Map('path -> value), tail)
         // case string :: Nil =>  nextOption(map ++ Map('infile -> string), list.tail)
         case option :: tail => {
           println("Unknown option " + option)
@@ -34,7 +53,33 @@ object ActivatorClient {
 
     val options = nextOption(Map(), arglist)
     val hanaClient = new HanaActivationClient(options('protocol).toString, options('host).toString, options('port).asInstanceOf[Int], options('user).toString, options('password).toString, options('dest).toString)
-    hanaClient.delete("reporter_jbi/deleteme.txt")
+    val singlemode = options.get('singleoperation)
+    if (singlemode != None) {
+      val dest = options.get('dest).toString
+      val path = options.get('path).toString
+      singlemode match {
+        case Some('createfile) => hanaClient.create(dest, path, false)
+        case Some('createdirectory) => hanaClient.create(dest, path, true)
+        case Some('activate) => hanaClient.activate(path)
+        case Some('delete) => {
+          if (path == "") {
+            hanaClient.delete(dest)
+          }
+          else {
+            hanaClient.delete(dest + "/" + path)
+          }
+        }
+        case Some('uploadfile) => {
+          val file = new File(path)
+          hanaClient.putFile(dest, file)
+        }
+        // TODO case Some('importpackage) => hanaClient.getPackage()
+        case Some('exportpackage) => {
+          val file = new File(path)
+          hanaClient.importFile(dest, file)
+        }
+      }
+    }
     hanaClient.close()
   }
 }
