@@ -56,16 +56,16 @@ object ActivatorClient {
     val options = nextOption(Map(), arglist)
     val hanaClient = new HanaActivationClient(options('protocol).toString, options('host).toString, options('port).asInstanceOf[Int], options('user).toString, options('password).toString, options('dest).toString)
     val singlemode = options.get('singleoperation)
-    if (singlemode != None) {
+    if (singlemode.isDefined) {
       val dest = options.get('dest).toString
       val path = options.get('path).toString
       val fullpath = path + "/" + dest
       var response : HttpResponse = null
-      singlemode match {
-        case Some('createfile) => response = hanaClient.create(dest, path, false)
-        case Some('createdirectory) => response = hanaClient.create(dest, path, true)
-        case Some('activate) => response = hanaClient.activate(fullpath)
-        case Some('delete) => {
+      singlemode.get match {
+        case 'createfile => response = hanaClient.create(dest, path, false)
+        case 'createdirectory => response = hanaClient.create(dest, path, true)
+        case 'activate => response = hanaClient.activate(fullpath)
+        case 'delete => {
           if (path == "") {
             response = hanaClient.delete(dest)
           }
@@ -73,12 +73,12 @@ object ActivatorClient {
             response = hanaClient.delete(fullpath)
           }
         }
-        case Some('uploadfile) => {
+        case 'uploadfile => {
           val file = new File(path)
           response = hanaClient.putFile(fullpath, file)
         }
-        // TODO case Some('importpackage) => hanaClient.getPackage()
-        case Some('exportpackage) => {
+        // TODO case 'importpackage => hanaClient.getPackage()
+        case 'exportpackage => {
           val file = new File(fullpath)
           val response = hanaClient.importFile(dest, file)
         }
@@ -91,8 +91,8 @@ object ActivatorClient {
         println("HTTP Status code: " + status.getStatusCode)
         println("Message" + status.getReasonPhrase)
         val content =  response.getEntity.getContent
-
         println("Content" + response.getEntity.getContent)
+        println("Headers" + response.getAllHeaders.map(x => x.getName + ": " + x.getValue).mkString(";"))
       }
 
     }
