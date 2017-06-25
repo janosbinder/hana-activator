@@ -1,5 +1,7 @@
 import java.io.File
 
+import org.apache.http.HttpResponse
+
 /**
   * Created by jbinder on 15.05.17.
   */
@@ -57,28 +59,42 @@ object ActivatorClient {
     if (singlemode != None) {
       val dest = options.get('dest).toString
       val path = options.get('path).toString
+      val fullpath = path + "/" + dest
+      var response : HttpResponse = null
       singlemode match {
-        case Some('createfile) => hanaClient.create(dest, path, false)
-        case Some('createdirectory) => hanaClient.create(dest, path, true)
-        case Some('activate) => hanaClient.activate(path)
+        case Some('createfile) => response = hanaClient.create(dest, path, false)
+        case Some('createdirectory) => response = hanaClient.create(dest, path, true)
+        case Some('activate) => response = hanaClient.activate(fullpath)
         case Some('delete) => {
           if (path == "") {
-            hanaClient.delete(dest)
+            response = hanaClient.delete(dest)
           }
           else {
-            hanaClient.delete(dest + "/" + path)
+            response = hanaClient.delete(fullpath)
           }
         }
         case Some('uploadfile) => {
           val file = new File(path)
-          hanaClient.putFile(dest, file)
+          response = hanaClient.putFile(fullpath, file)
         }
         // TODO case Some('importpackage) => hanaClient.getPackage()
         case Some('exportpackage) => {
-          val file = new File(path)
-          hanaClient.importFile(dest, file)
+          val file = new File(fullpath)
+          val response = hanaClient.importFile(dest, file)
         }
       }
+      if (response == null) {
+        println("ERROR: No response from HANA service")
+      } else {
+        println("Response from HANA service:")
+        val status = response.getStatusLine
+        println("HTTP Status code: " + status.getStatusCode)
+        println("Message" + status.getReasonPhrase)
+        val content =  response.getEntity.getContent
+
+        println("Content" + response.getEntity.getContent)
+      }
+
     }
     hanaClient.close()
   }

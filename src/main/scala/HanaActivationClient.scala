@@ -30,7 +30,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
 
   // saveFile
   def putFile(path: String, file: File) : HttpResponse = {
-    val transferFileCall = new HttpPut(getRoute("FILE") + "/" + path + "/" + file.getName)
+    val transferFileCall = new HttpPut(getRoute("FILE") + "/" + path)
     addContentType(file, transferFileCall)
     transferFileCall.setEntity(createEntity(file))
     val response = super.executeRequest(transferFileCall)
@@ -44,7 +44,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
     return response
   }
 
-  def getPackage(path: String, exportFileName: String): Unit = {
+  def getPackage(path: String, exportFileName: String): HttpResponse = {
     val exportPackageCall = new HttpGet(getRoute("EXPORT") + "/" + path + ".zip")
     val response = super.executeRequest(exportPackageCall)
     val statusCode = response.getStatusLine.getStatusCode
@@ -55,6 +55,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
     IOUtils.copy(response.getEntity.getContent, output)
     output.flush()
     output.close()
+    return response
 
   }
 
@@ -109,7 +110,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
   }
 
   // createRepoEntry
-  def create(path: String, fileName: String, isDir: Boolean): Unit = {
+  def create(path: String, fileName: String, isDir: Boolean): HttpResponse = {
     val createCall = new HttpPost(getRoute("FILE") + "/" + path)
     val stringEntity = new StringEntity("{\"Name\": \"" + fileName + "\", \"Directory\": \"" + isDir.toString + "\"}", Consts.UTF_8)
     createCall.setEntity(stringEntity)
