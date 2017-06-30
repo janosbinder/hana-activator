@@ -1,5 +1,7 @@
 import java.io.File
+import java.nio.charset.Charset
 
+import org.apache.commons.io.IOUtils
 import org.apache.http.HttpResponse
 
 /**
@@ -57,9 +59,9 @@ object ActivatorClient {
     val hanaClient = new HanaActivationClient(options('protocol).toString, options('host).toString, options('port).asInstanceOf[Int], options('user).toString, options('password).toString, options('dest).toString)
     val singlemode = options.get('singleoperation)
     if (singlemode.isDefined) {
-      val dest = options.get('dest).toString
-      val path = options.get('path).toString
-      val fullpath = path + "/" + dest
+      val dest = options.getOrElse('dest, "").toString
+      val path = options.getOrElse('path, "").toString
+      val fullpath = dest + "/" + path
       var response : HttpResponse = null
       singlemode.get match {
         case 'createfile => response = hanaClient.create(dest, path, false)
@@ -91,7 +93,7 @@ object ActivatorClient {
         println("HTTP Status code: " + status.getStatusCode)
         println("Message" + status.getReasonPhrase)
         val content =  response.getEntity.getContent
-        println("Content" + response.getEntity.getContent)
+        println("Content" + IOUtils.toString(response.getEntity.getContent, Charset.defaultCharset))
         println("Headers" + response.getAllHeaders.map(x => x.getName + ": " + x.getValue).mkString(";"))
       }
 

@@ -115,6 +115,11 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
     val stringEntity = new StringEntity("{\"Name\": \"" + fileName + "\", \"Directory\": \"" + isDir.toString + "\"}", Consts.UTF_8)
     createCall.setEntity(stringEntity)
     val response = super.executeRequest(createCall)
+    val statusCode = response.getStatusLine.getStatusCode
+    if (statusCode != 201) {
+      throw new HanaClientException(s"Service responded with status $statusCode instead of 201 - artifact probably exist - check $path")
+    }
+    return response
   }
 
   private def addContentType(file: File, request: HttpUriRequest) : Unit = {
