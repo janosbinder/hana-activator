@@ -16,10 +16,11 @@ object ActivatorClient {
       list match {
         case Nil => map
         case "--url" :: value :: tail => {
-          val url_regex = """^(https?):\/\/?([^:\/\s]+):(\d+)((\/\w+)*)$""".r
+          val url_regex = """^(https?):\/\/([^:\/\s]+):(\d+)((\/\w+)*)$""".r
           value match {
             case url_regex(protocol, host, port, dest, _*) =>
-              nextOption(map ++ Map('protocol -> protocol) ++ Map('host -> host) ++ Map('port -> port.toInt) ++ Map('dest -> dest), tail)
+              // drop is for the starting '/'
+              nextOption(map ++ Map('protocol -> protocol) ++ Map('host -> host) ++ Map('port -> port.toInt) ++ Map('dest -> dest.drop(1)), tail)
             case _ => {
               println("url wrongly provided: " + value)
               sys.exit(1)
