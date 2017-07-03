@@ -10,7 +10,7 @@ import org.apache.http.util.EntityUtils
 /**
   * Created by jbinder on 16.05.17.
   */
-class HanaActivationClient(protocol:String, host: String, port: Int, user: String, password: String, dest: String) extends HanaClient(protocol, host, port, user, password) {
+class HanaActivationClient(protocol: String, host: String, port: Int, user: String, password: String, dest: String) extends HanaClient(protocol, host, port, user, password) {
   def getRoute(route: String): String = {
     // See /sap/hana/xs/dt/base/.xsaccess for the routes
     val routes = Map(
@@ -29,7 +29,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
   }
 
   // saveFile
-  def putFile(path: String, file: File) : HttpResponse = {
+  def putFile(path: String, file: File): HttpResponse = {
     val transferFileCall = new HttpPut(getRoute("FILE") + "/" + path)
     addContentType(file, transferFileCall)
     transferFileCall.setEntity(createEntity(file))
@@ -38,7 +38,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
   }
 
   // getFile
-  def getFile(path: String) : HttpResponse = {
+  def getFile(path: String): HttpResponse = {
     val getFileCall = new HttpGet(getRoute("FILE") + "/" + path)
     val response = super.executeRequest(getFileCall)
     return response
@@ -61,7 +61,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
 
 
   // importFile
-  def importFile(path: String, file: File) : HttpResponse = {
+  def importFile(path: String, file: File): HttpResponse = {
     val importFileCall = new HttpPost(getRoute("IMPORT") + "/" + path + "/" + file.getName + "?force=true")
     importFileCall.addHeader("Slug", file.getName)
     importFileCall.addHeader("X-Create-Options", "no-overwrite")
@@ -82,8 +82,8 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
         val importLocationCall = new HttpPut(s"$protocol://$host:$port$importLocation")
         importLocationCall.setEntity(createEntity(file))
         addContentType(file, importLocationCall)
-        val fileLenght = file.length - 1L
-        importLocationCall.addHeader("Content-Range", s"bytes 0-$fileLenght/$fileLenght")
+        val fileLength = file.length - 1L
+        importLocationCall.addHeader("Content-Range", s"bytes 0-$fileLength/$fileLength")
         val responseImportLocationCall = super.executeRequest(importLocationCall)
         EntityUtils.consumeQuietly(responseImportLocationCall.getEntity)
         return responseImportLocationCall
@@ -101,9 +101,10 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
   // activate
   def activate(path: String): HttpResponse = {
     val activateCall = new HttpPut(getRoute("FILE") + "/" + path + "?parts=meta")
-    activateCall.addHeader("X-Requested-With", "XMLHttpRequest")
-    activateCall.addHeader("Content-Type", "application/json")
-    activateCall.addHeader("SapBackPack", "{\"MassTransfer\":true, \"Activate\":true}")
+    val headers = Map("X-Requested-With" -> "XMLHttpRequest",
+      "SapBackPack" -> "{\"MassTransfer\":true, \"Activate\":true}",
+      "Content-Type" -> "application/json")
+    headers.foreach { case (k, v) => activateCall.addHeader(k, v) }
     val response = super.executeRequest(activateCall)
     return response
 
@@ -122,8 +123,8 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
     return response
   }
 
-  private def addContentType(file: File, request: HttpUriRequest) : Unit = {
-    var contentType : String = ""
+  private def addContentType(file: File, request: HttpUriRequest): Unit = {
+    var contentType: String = ""
     try {
       if (file.getName.endsWith(".zip")) {
         contentType = "application/x-zip-compressed"
@@ -131,7 +132,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
         contentType = Files.probeContentType(file.toPath)
       }
     } catch {
-      case ex : IOException => {
+      case ex: IOException => {
         contentType = ContentType.APPLICATION_OCTET_STREAM.getMimeType
       }
     } finally {
@@ -140,7 +141,7 @@ class HanaActivationClient(protocol:String, host: String, port: Int, user: Strin
   }
 
   @throws[IOException]
-  private def createEntity(file: File) : HttpEntity = {
+  private def createEntity(file: File): HttpEntity = {
     val fileEntity = new FileEntity(file)
     fileEntity.setContentType(Files.probeContentType(file.toPath))
     fileEntity.setChunked(false)

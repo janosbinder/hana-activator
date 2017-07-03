@@ -1,3 +1,8 @@
+import java.nio.charset.Charset
+
+import org.apache.commons.io.IOUtils
+import org.apache.http.HttpResponse
+
 /**
   * Created by jbinder on 03.07.17.
   * This tester should be called with "SingleModeTester user password url"
@@ -24,7 +29,32 @@ object SingleModeTester {
 
   def startTesting(user: String, password: String, protocol: String, host : String, port: Int, dest: String) : Unit = {
     val hanaClient = new HanaActivationClient(protocol, host, port, user, password, dest)
+    val sandbox = "sandbox"
+    stopOnInvalidResponse(hanaClient.create(dest, sandbox, true), "hanaClient.create(dest, sandbox, true", Set(201))
+    stopOnInvalidResponse(hanaClient.create(dest, sandbox + "/temp.xsjs", false), "hanaClient.create(dest, \"/temp.xsjs\", false", Set(201))
+    // stopOnInvalidResponse(hanaClient.activate(s"$dest/$sandbox/temp.xsjs"), "hanaClient.activate(s\"$dest/$sandbox/temp.xsjs\")")
+    stopOnInvalidResponse(hanaClient.activate(s"$dest/$sandbox"), "hanaClient.activate(s\"$dest/$sandbox\")")
+    stopOnInvalidResponse(hanaClient.delete(s"$dest/$sandbox/temp.xsjs"), "hanaClient.delete(s\"$dest/$sandbox/temp.xsjs\")")
+    stopOnInvalidResponse(hanaClient.delete(s"$dest/$sandbox"), "hanaClient.delete(s\"$dest/$sandbox\")")
     hanaClient.close()
+  }
+
+  def stopOnInvalidResponse(response : HttpResponse, executedMethod : String, expectedStatus : Set[Int] = Set(200,201)) = {
+    if (response == null) {
+      println("ERROR: No response from HANA service")
+    } else {
+      val status = response.getStatusLine
+      if (!expectedStatus(status.getStatusCode)) {
+        println("ERROR: Invalid status code")
+        println(s"Called method: $executedMethod")
+        println("HTTP Status code: " + status.getStatusCode)
+        println("Message" + status.getReasonPhrase)
+        val content = response.getEntity.getContent
+        println("Content" + IOUtils.toString(response.getEntity.getContent, Charset.defaultCharset))
+        println("Headers" + response.getAllHeaders.map(x => x.getName + ": " + x.getValue).mkString(";"))
+        sys.exit(1)
+      }
+    }
   }
 
 }
