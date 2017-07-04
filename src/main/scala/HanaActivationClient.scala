@@ -29,7 +29,7 @@ class HanaActivationClient(protocol: String, host: String, port: Int, user: Stri
   }
 
   // saveFile
-  def putFile(path: String, file: File): HttpResponse = {
+  def putFile(path: String, file: File): CloseableHttpResponse = {
     val transferFileCall = new HttpPut(getRoute("FILE") + "/" + path)
     addContentType(file, transferFileCall)
     transferFileCall.setEntity(createEntity(file))
@@ -38,13 +38,13 @@ class HanaActivationClient(protocol: String, host: String, port: Int, user: Stri
   }
 
   // getFile
-  def getFile(path: String): HttpResponse = {
+  def getFile(path: String): CloseableHttpResponse = {
     val getFileCall = new HttpGet(getRoute("FILE") + "/" + path)
     val response = super.executeRequest(getFileCall)
     return response
   }
 
-  def getPackage(path: String, exportFileName: String): HttpResponse = {
+  def getPackage(path: String, exportFileName: String): CloseableHttpResponse = {
     val exportPackageCall = new HttpGet(getRoute("EXPORT") + "/" + path + ".zip")
     val response = super.executeRequest(exportPackageCall)
     val statusCode = response.getStatusLine.getStatusCode
@@ -61,7 +61,7 @@ class HanaActivationClient(protocol: String, host: String, port: Int, user: Stri
 
 
   // importFile
-  def importFile(path: String, file: File): HttpResponse = {
+  def importFile(path: String, file: File): CloseableHttpResponse = {
     val importFileCall = new HttpPost(getRoute("IMPORT") + "/" + path + "/" + file.getName + "?force=true")
     importFileCall.addHeader("Slug", file.getName)
     importFileCall.addHeader("X-Create-Options", "no-overwrite")
@@ -92,14 +92,14 @@ class HanaActivationClient(protocol: String, host: String, port: Int, user: Stri
   }
 
   // delete
-  def delete(path: String): HttpResponse = {
+  def delete(path: String): CloseableHttpResponse = {
     val deleteCall = new HttpDelete(getRoute("FILE") + "/" + path)
     val response = super.executeRequest(deleteCall)
     return response
   }
 
   // activate
-  def activate(path: String): HttpResponse = {
+  def activate(path: String): CloseableHttpResponse = {
     val activateCall = new HttpPut(getRoute("FILE") + "/" + path + "?parts=meta")
     val headers = Map("X-Requested-With" -> "XMLHttpRequest",
       "SapBackPack" -> "{\"MassTransfer\":true, \"Activate\":true}",
@@ -111,7 +111,7 @@ class HanaActivationClient(protocol: String, host: String, port: Int, user: Stri
   }
 
   // createRepoEntry
-  def create(path: String, fileName: String, isDir: Boolean): HttpResponse = {
+  def create(path: String, fileName: String, isDir: Boolean): CloseableHttpResponse = {
     val createCall = new HttpPost(getRoute("FILE") + "/" + path)
     val stringEntity = new StringEntity("{\"Name\": \"" + fileName + "\", \"Directory\": \"" + isDir.toString + "\"}", Consts.UTF_8)
     createCall.setEntity(stringEntity)

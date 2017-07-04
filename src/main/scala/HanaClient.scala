@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
 import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.{HttpHead, HttpPost, HttpUriRequest}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpHead, HttpPost, HttpUriRequest}
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.{BasicCookieStore, CloseableHttpClient, HttpClients}
 
@@ -33,7 +33,7 @@ class HanaClient(val protocol: String, val host: String, val port: Int, val user
     client.close()
   }
 
-  def executeRequest(request: HttpUriRequest): HttpResponse = {
+  def executeRequest(request: HttpUriRequest): CloseableHttpResponse = {
     if (token == "") {
       throw new HanaClientException(s"X-CSRF-Token is missing - Check authentication at $host:$port with user $user")
     }

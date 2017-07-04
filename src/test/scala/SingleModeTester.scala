@@ -2,6 +2,8 @@ import java.nio.charset.Charset
 
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpResponse
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.util.EntityUtils
 
 /**
   * Created by jbinder on 03.07.17.
@@ -33,13 +35,13 @@ object SingleModeTester {
     stopOnInvalidResponse(hanaClient.create(dest, sandbox, true), "hanaClient.create(dest, sandbox, true", Set(201))
     stopOnInvalidResponse(hanaClient.create(dest, sandbox + "/temp.xsjs", false), "hanaClient.create(dest, \"/temp.xsjs\", false", Set(201))
     // stopOnInvalidResponse(hanaClient.activate(s"$dest/$sandbox/temp.xsjs"), "hanaClient.activate(s\"$dest/$sandbox/temp.xsjs\")")
-    stopOnInvalidResponse(hanaClient.activate(s"$dest/$sandbox"), "hanaClient.activate(s\"$dest/$sandbox\")")
-    stopOnInvalidResponse(hanaClient.delete(s"$dest/$sandbox/temp.xsjs"), "hanaClient.delete(s\"$dest/$sandbox/temp.xsjs\")")
-    stopOnInvalidResponse(hanaClient.delete(s"$dest/$sandbox"), "hanaClient.delete(s\"$dest/$sandbox\")")
+    // stopOnInvalidResponse(hanaClient.activate(s"$dest/$sandbox"), "hanaClient.activate(s\"$dest/$sandbox\")")
+    stopOnInvalidResponse(hanaClient.delete(s"$dest/$sandbox/temp.xsjs"), "hanaClient.delete(s\"$dest/$sandbox/temp.xsjs\")",Set(204))
+    stopOnInvalidResponse(hanaClient.delete(s"$dest/$sandbox"), "hanaClient.delete(s\"$dest/$sandbox\")",Set(204))
     hanaClient.close()
   }
 
-  def stopOnInvalidResponse(response : HttpResponse, executedMethod : String, expectedStatus : Set[Int] = Set(200,201)) = {
+  def stopOnInvalidResponse(response : CloseableHttpResponse, executedMethod : String, expectedStatus : Set[Int] = Set(200,201,204)) = {
     if (response == null) {
       println("ERROR: No response from HANA service")
     } else {
@@ -53,7 +55,11 @@ object SingleModeTester {
         println("Content" + IOUtils.toString(response.getEntity.getContent, Charset.defaultCharset))
         println("Headers" + response.getAllHeaders.map(x => x.getName + ": " + x.getValue).mkString(";"))
         sys.exit(1)
+      } else {
+        println(s"Succesfully called method: $executedMethod")
       }
+      EntityUtils.consumeQuietly(response.getEntity)
+      response.close()
     }
   }
 
