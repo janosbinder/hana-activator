@@ -63,28 +63,15 @@ object ActivatorClient {
       val dest = options.getOrElse('dest, "").toString
       val path = options.getOrElse('path, "").toString
       val fullpath = dest + "/" + path
-      var response : HttpResponse = null
-      singlemode.get match {
-        case 'createfile => response = hanaClient.create(dest, path, false)
-        case 'createdirectory => response = hanaClient.create(dest, path, true)
-        case 'activate => response = hanaClient.activate(fullpath)
-        case 'delete => {
-          if (path == "") {
-            response = hanaClient.delete(dest)
-          }
-          else {
-            response = hanaClient.delete(fullpath)
-          }
-        }
-        case 'uploadfile => {
-          val file = new File(path)
-          response = hanaClient.putFile(fullpath, file)
-        }
+      // var response : HttpResponse = null
+      val response : HttpResponse = singlemode.get match {
+        case 'createfile => hanaClient.create(dest, path, false)
+        case 'createdirectory => hanaClient.create(dest, path, true)
+        case 'activate => hanaClient.activate(fullpath)
+        case 'delete => if (path == "") hanaClient.delete(dest) else hanaClient.delete(fullpath)
+        case 'uploadfile => hanaClient.putFile(fullpath, new File(path))
         // TODO case 'importpackage => hanaClient.getPackage()
-        case 'exportpackage => {
-          val file = new File(fullpath)
-          val response = hanaClient.importFile(dest, file)
-        }
+        case 'exportpackage => hanaClient.importFile(dest, new File(fullpath))
       }
       if (response == null) {
         println("ERROR: No response from HANA service")
